@@ -38,7 +38,6 @@ const unitTypeSchema = new Schema<IUnitType>(
   }
 );
 
-unitTypeSchema.index({ nameEn: 1 }, { unique: true });
 unitTypeSchema.index({ isActive: 1 });
 unitTypeSchema.index({ order: 1 });
 

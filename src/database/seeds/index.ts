@@ -202,6 +202,22 @@ async function seedFeatures(): Promise<void> {
   logger.info(`✅ Seeded ${features.length} features`);
 }
 
+// ─── Auto-seed (called from server startup — DB already connected) ─────────
+export async function runAutoSeed(): Promise<{
+  superAdminEmail: string;
+  superAdminPassword: string;
+}> {
+  await seedRoles();
+  await seedSuperAdmin();
+  await seedBuildingTypes();
+  await seedUnitTypes();
+  await seedFeatures();
+  return {
+    superAdminEmail: env.SUPER_ADMIN_EMAIL,
+    superAdminPassword: env.SUPER_ADMIN_PASSWORD,
+  };
+}
+
 // ─── Main Seed Runner ─────────────────────────────────────────────
 async function runSeeds(): Promise<void> {
   try {

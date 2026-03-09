@@ -45,7 +45,6 @@ const featureSchema = new Schema<IFeature>(
   }
 );
 
-featureSchema.index({ nameEn: 1 }, { unique: true });
 featureSchema.index({ category: 1 });
 featureSchema.index({ isActive: 1 });
 featureSchema.index({ order: 1 });

@@ -38,7 +38,6 @@ const buildingTypeSchema = new Schema<IBuildingType>(
   }
 );
 
-buildingTypeSchema.index({ nameEn: 1 }, { unique: true });
 buildingTypeSchema.index({ isActive: 1 });
 buildingTypeSchema.index({ order: 1 });
 

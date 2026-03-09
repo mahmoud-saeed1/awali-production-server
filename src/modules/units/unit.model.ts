@@ -148,7 +148,6 @@ const unitSchema = new Schema<IUnit>(
 );
 
 // Indexes
-unitSchema.index({ unitNumber: 1 }, { unique: true });
 unitSchema.index({ status: 1, "publication.isPublished": 1, isDeleted: 1 });
 unitSchema.index({ buildingType: 1, unitType: 1 });
 unitSchema.index({ "price.amount": 1 });
