@@ -52,9 +52,8 @@ const envSchema = z.object({
 const parseResult = envSchema.safeParse(process.env);
 
 if (!parseResult.success) {
-  console.error('❌ Environment validation failed:');
-  console.error(parseResult.error.format());
-  process.exit(1);
+  const formatted = JSON.stringify(parseResult.error.format(), null, 2);
+  throw new Error(`❌ Environment validation failed:\n${formatted}`);
 }
 
 export const env = parseResult.data;

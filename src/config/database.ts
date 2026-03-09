@@ -13,7 +13,7 @@ export const connectDatabase = async (): Promise<void> => {
     logger.info(`✅ MongoDB connected to ${env.MONGODB_DB_NAME}`);
   } catch (error) {
     logger.error('❌ MongoDB connection error:', error);
-    process.exit(1);
+    throw error; // Let the caller decide whether to exit or retry
   }
 
   mongoose.connection.on('error', (err) => {
