@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import mongoose, { Schema, Document, Types } from "mongoose";
 
 export interface IBuildingType extends Document {
   _id: Types.ObjectId;
@@ -18,13 +18,13 @@ const buildingTypeSchema = new Schema<IBuildingType>(
     nameEn: { type: String, required: true, unique: true, trim: true },
     nameAr: { type: String, required: true, trim: true },
     description: {
-      en: { type: String, default: '' },
-      ar: { type: String, default: '' },
+      en: { type: String, default: "" },
+      ar: { type: String, default: "" },
     },
     icon: { type: String },
     isActive: { type: Boolean, default: true },
     order: { type: Number, default: 0 },
-    createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    createdBy: { type: Schema.Types.ObjectId, ref: "User" },
   },
   {
     timestamps: true,
@@ -35,10 +35,13 @@ const buildingTypeSchema = new Schema<IBuildingType>(
         return ret;
       },
     },
-  }
+  },
 );
 
 buildingTypeSchema.index({ isActive: 1 });
 buildingTypeSchema.index({ order: 1 });
 
-export const BuildingType = mongoose.model<IBuildingType>('BuildingType', buildingTypeSchema);
+export const BuildingType = mongoose.model<IBuildingType>(
+  "BuildingType",
+  buildingTypeSchema,
+);

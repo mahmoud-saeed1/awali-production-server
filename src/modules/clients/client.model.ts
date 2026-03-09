@@ -97,7 +97,6 @@ const clientSchema = new Schema<IClient>(
 );
 
 clientSchema.index({ phone: 1 });
-clientSchema.index({ email: 1 }, { sparse: true });
 clientSchema.index({ status: 1 });
 clientSchema.index({ rating: 1 });
 clientSchema.index({ source: 1 });

@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import mongoose, { Schema, Document, Types } from "mongoose";
 
 export interface IRole extends Document {
   _id: Types.ObjectId;
@@ -18,8 +18,8 @@ const roleSchema = new Schema<IRole>(
     nameEn: { type: String, required: true, unique: true, trim: true },
     nameAr: { type: String, required: true, trim: true },
     description: {
-      en: { type: String, default: '' },
-      ar: { type: String, default: '' },
+      en: { type: String, default: "" },
+      ar: { type: String, default: "" },
     },
     permissions: {
       type: Schema.Types.Mixed,
@@ -28,7 +28,7 @@ const roleSchema = new Schema<IRole>(
     },
     isSystem: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
-    createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    createdBy: { type: Schema.Types.ObjectId, ref: "User" },
   },
   {
     timestamps: true,
@@ -39,10 +39,10 @@ const roleSchema = new Schema<IRole>(
         return ret;
       },
     },
-  }
+  },
 );
 
 roleSchema.index({ isActive: 1 });
 roleSchema.index({ isSystem: 1 });
 
-export const Role = mongoose.model<IRole>('Role', roleSchema);
+export const Role = mongoose.model<IRole>("Role", roleSchema);

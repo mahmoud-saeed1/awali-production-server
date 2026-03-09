@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import mongoose, { Schema, Document, Types } from "mongoose";
 
 export interface IUnitType extends Document {
   _id: Types.ObjectId;
@@ -18,13 +18,13 @@ const unitTypeSchema = new Schema<IUnitType>(
     nameEn: { type: String, required: true, unique: true, trim: true },
     nameAr: { type: String, required: true, trim: true },
     description: {
-      en: { type: String, default: '' },
-      ar: { type: String, default: '' },
+      en: { type: String, default: "" },
+      ar: { type: String, default: "" },
     },
     icon: { type: String },
     isActive: { type: Boolean, default: true },
     order: { type: Number, default: 0 },
-    createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    createdBy: { type: Schema.Types.ObjectId, ref: "User" },
   },
   {
     timestamps: true,
@@ -35,10 +35,10 @@ const unitTypeSchema = new Schema<IUnitType>(
         return ret;
       },
     },
-  }
+  },
 );
 
 unitTypeSchema.index({ isActive: 1 });
 unitTypeSchema.index({ order: 1 });
 
-export const UnitType = mongoose.model<IUnitType>('UnitType', unitTypeSchema);
+export const UnitType = mongoose.model<IUnitType>("UnitType", unitTypeSchema);

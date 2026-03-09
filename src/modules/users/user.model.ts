@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import mongoose, { Schema, Document, Types } from "mongoose";
 
 export interface IUser extends Document {
   _id: Types.ObjectId;
@@ -22,33 +22,37 @@ const userSchema = new Schema<IUser>(
   {
     email: {
       type: String,
-      required: [true, 'Email is required'],
+      required: [true, "Email is required"],
       unique: true,
       lowercase: true,
       trim: true,
     },
     password: {
       type: String,
-      required: [true, 'Password is required'],
+      required: [true, "Password is required"],
       select: false,
     },
     name: {
-      en: { type: String, required: [true, 'English name is required'], trim: true },
-      ar: { type: String, default: '', trim: true },
+      en: {
+        type: String,
+        required: [true, "English name is required"],
+        trim: true,
+      },
+      ar: { type: String, default: "", trim: true },
     },
     phone: { type: String, trim: true },
     avatar: { type: String },
     role: {
       type: Schema.Types.ObjectId,
-      ref: 'Role',
-      required: [true, 'Role is required'],
+      ref: "Role",
+      required: [true, "Role is required"],
     },
     isActive: { type: Boolean, default: true },
     lastLoginAt: { type: Date },
     failedLoginAttempts: { type: Number, default: 0 },
     lockedUntil: { type: Date, default: null },
     refreshToken: { type: String, select: false },
-    createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    createdBy: { type: Schema.Types.ObjectId, ref: "User" },
   },
   {
     timestamps: true,
@@ -61,11 +65,11 @@ const userSchema = new Schema<IUser>(
         return ret;
       },
     },
-  }
+  },
 );
 
 userSchema.index({ role: 1 });
 userSchema.index({ isActive: 1 });
 userSchema.index({ createdAt: -1 });
 
-export const User = mongoose.model<IUser>('User', userSchema);
+export const User = mongoose.model<IUser>("User", userSchema);

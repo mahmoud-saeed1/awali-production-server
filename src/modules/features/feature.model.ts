@@ -1,11 +1,11 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import mongoose, { Schema, Document, Types } from "mongoose";
 
 export interface IFeature extends Document {
   _id: Types.ObjectId;
   nameEn: string;
   nameAr: string;
-  category: 'amenity' | 'characteristic' | 'facility' | 'service';
-  valueType: 'boolean' | 'string' | 'number';
+  category: "amenity" | "characteristic" | "facility" | "service";
+  valueType: "boolean" | "string" | "number";
   icon?: string;
   isActive: boolean;
   order: number;
@@ -20,18 +20,18 @@ const featureSchema = new Schema<IFeature>(
     nameAr: { type: String, required: true, trim: true },
     category: {
       type: String,
-      enum: ['amenity', 'characteristic', 'facility', 'service'],
+      enum: ["amenity", "characteristic", "facility", "service"],
       required: true,
     },
     valueType: {
       type: String,
-      enum: ['boolean', 'string', 'number'],
-      default: 'boolean',
+      enum: ["boolean", "string", "number"],
+      default: "boolean",
     },
     icon: { type: String },
     isActive: { type: Boolean, default: true },
     order: { type: Number, default: 0 },
-    createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    createdBy: { type: Schema.Types.ObjectId, ref: "User" },
   },
   {
     timestamps: true,
@@ -42,11 +42,11 @@ const featureSchema = new Schema<IFeature>(
         return ret;
       },
     },
-  }
+  },
 );
 
 featureSchema.index({ category: 1 });
 featureSchema.index({ isActive: 1 });
 featureSchema.index({ order: 1 });
 
-export const Feature = mongoose.model<IFeature>('Feature', featureSchema);
+export const Feature = mongoose.model<IFeature>("Feature", featureSchema);
