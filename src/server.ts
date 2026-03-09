@@ -7,7 +7,7 @@ import {
   R2_BUCKET,
 } from "./config";
 import { logger } from "./shared/utils/logger";
-import { HeadBucketCommand } from "@aws-sdk/client-s3";
+import { ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { runAutoSeed } from "./database/seeds/index";
 
 // ─── ANSI color tokens ────────────────────────────────────────────────────
@@ -64,15 +64,16 @@ async function checkR2(): Promise<{ ok: boolean; detail: string }> {
   }
   try {
     await r2Client.send(
-      new HeadBucketCommand({ Bucket: R2_BUCKET || "awali-media" }),
+      new ListObjectsV2Command({ Bucket: R2_BUCKET || "awali-media", MaxKeys: 1 }),
     );
     return { ok: true, detail: R2_BUCKET || "awali-media" };
   } catch (err: unknown) {
     const httpStatus = (err as { $metadata?: { httpStatusCode?: number } })
       ?.$metadata?.httpStatusCode;
-    if (httpStatus === 404) return { ok: false, detail: "Bucket not found" };
-    if (httpStatus === 403) return { ok: false, detail: "Access denied" };
-    return { ok: false, detail: "Connection failed" };
+    if (httpStatus === 404) return { ok: false, detail: 'Bucket not found'   };
+    if (httpStatus === 403) return { ok: false, detail: 'Access denied'      };
+    if (httpStatus === 401) return { ok: false, detail: 'Invalid credentials' };
+    return { ok: false, detail: `Connection failed (${httpStatus ?? 'network'})` };
   }
 }
 

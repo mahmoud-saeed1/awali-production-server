@@ -6,6 +6,7 @@ export const r2Client = new S3Client({
   endpoint: env.CLOUDFLARE_ACCOUNT_ID
     ? `https://${env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`
     : undefined,
+  forcePathStyle: true, // Required for Cloudflare R2 — uses path-style URLs
   credentials:
     env.CLOUDFLARE_R2_ACCESS_KEY_ID && env.CLOUDFLARE_R2_SECRET_ACCESS_KEY
       ? {
