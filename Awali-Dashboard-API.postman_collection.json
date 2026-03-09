@@ -1,0 +1,2806 @@
+{
+  "info": {
+    "_postman_id": "d2a1f3c8-9b4e-47a2-b165-38e2c7f09d54",
+    "name": "Awali Dashboard API",
+    "description": "# Awali Real Estate Dashboard — Complete API Documentation\n\n## Overview\nEnterprise-grade REST API for the Awali CRM & Property Management Dashboard.\n\n## Authentication\nAll protected endpoints require a Bearer token:\n```\nAuthorization: Bearer {{awali_access_token}}\n```\n\n## Base URL\n- Development: `{{awali_base_url}}` → `http://localhost:5000/api/v1`\n\n## Response Format\n- **Success**: `{ success: true, data: {...}, meta: {...} }`\n- **Error**: `{ success: false, error: { code, message, details } }`\n\n## Pagination\n`?page=1&limit=20`\n\n## Sorting\n`?sort=-createdAt,name` (dash prefix = descending)\n\n## Filtering\n`?status=available&bedrooms=3`\n\n## Range filtering\n`?price.amount[gte]=300000&price.amount[lte]=500000`\n\n## Text search\n`?search=villa`",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "description": "Login, register, token management, and profile endpoints.",
+      "item": [
+        {
+          "name": "Register New User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"agent@awali.com\",\n  \"password\": \"Agent@Awali2026!\",\n  \"name\": {\n    \"en\": \"Ahmed Al-Rashidi\",\n    \"ar\": \"أحمد الراشدي\"\n  },\n  \"phone\": \"+966501234567\",\n  \"role\": \"{{awali_role_id}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{awali_base_url}}/auth/register",
+              "host": ["{{awali_base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Creates a new user account. Requires super-admin Bearer token.\n\n**Required fields:** email, password, name.en, name.ar, role (ObjectId)\n\n**Password rules:** 8+ chars, must include uppercase, lowercase, number, and special character."
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data && jsonData.data.tokens) {",
+                  "  pm.environment.set('awali_access_token', jsonData.data.tokens.accessToken);",
+                  "  pm.environment.set('awali_refresh_token', jsonData.data.tokens.refreshToken);",
+                  "  pm.environment.set('awali_user_id', jsonData.data.user.id);",
+                  "  console.log('✅ Tokens saved to environment');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@awali.com\",\n  \"password\": \"Admin@Awali2026!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{awali_base_url}}/auth/login",
+              "host": ["{{awali_base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Authenticates a user and returns access + refresh tokens.\n\n**Auto-saves** `awali_access_token`, `awali_refresh_token`, and `awali_user_id` to environment via test script."
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data && jsonData.data.tokens) {",
+                  "  pm.environment.set('awali_access_token', jsonData.data.tokens.accessToken);",
+                  "  pm.environment.set('awali_refresh_token', jsonData.data.tokens.refreshToken);",
+                  "  console.log('✅ New tokens saved to environment');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{awali_refresh_token}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{awali_base_url}}/auth/refresh",
+              "host": ["{{awali_base_url}}"],
+              "path": ["auth", "refresh"]
+            },
+            "description": "Exchanges a valid refresh token for a new access token + refresh token pair.\n\n**Auto-saves** new tokens to environment via test script."
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{awali_refresh_token}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{awali_base_url}}/auth/logout",
+              "host": ["{{awali_base_url}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "Invalidates the provided refresh token, ending the session."
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"Admin@Awali2026!\",\n  \"newPassword\": \"Admin@Awali2027!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{awali_base_url}}/auth/change-password",
+              "host": ["{{awali_base_url}}"],
+              "path": ["auth", "change-password"]
+            },
+            "description": "Changes the current user's password. Both old and new password required.\n\n**Password rules:** 8+ chars, uppercase, lowercase, number, and special character."
+          }
+        },
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/auth/me",
+              "host": ["{{awali_base_url}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Returns the full profile of the currently authenticated user, including their role and permissions."
+          }
+        }
+      ]
+    },
+    {
+      "name": "👥 Users",
+      "description": "User management — create agents, managers, and admins.",
+      "item": [
+        {
+          "name": "📁 CRUD Operations",
+          "item": [
+            {
+              "name": "List All Users",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/users?page=1&limit=20",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["users"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "description": "Page number (starts at 1)"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20",
+                      "description": "Items per page (max 100)"
+                    }
+                  ]
+                },
+                "description": "Returns a paginated list of all users."
+              }
+            },
+            {
+              "name": "Get User by ID",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/users/{{awali_user_id}}",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["users", "{{awali_user_id}}"]
+                },
+                "description": "Returns a single user by their MongoDB ObjectId."
+              }
+            },
+            {
+              "name": "Create User",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.success && jsonData.data) {",
+                      "  pm.environment.set('awali_user_id', jsonData.data.id);",
+                      "  console.log('✅ User ID saved:', jsonData.data.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  },
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"agent.new@awali.com\",\n  \"password\": \"Agent@Awali2026!\",\n  \"name\": {\n    \"en\": \"Sara Al-Zahrani\",\n    \"ar\": \"سارة الزهراني\"\n  },\n  \"phone\": \"+966509876543\",\n  \"role\": \"{{awali_role_id}}\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{awali_base_url}}/users",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["users"]
+                },
+                "description": "Creates a new platform user.\n\n**Required:** email, password, name.en, name.ar, role (ObjectId)\n\nAuto-saves `awali_user_id` to environment."
+              }
+            },
+            {
+              "name": "Update User",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  },
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": {\n    \"en\": \"Sara Al-Zahrani Updated\",\n    \"ar\": \"سارة الزهراني محدث\"\n  },\n  \"phone\": \"+966509876000\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{awali_base_url}}/users/{{awali_user_id}}",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["users", "{{awali_user_id}}"]
+                },
+                "description": "Partially updates a user's profile. All fields optional.\n\n**Updatable:** email, name.en, name.ar, phone, role, avatar (URL)"
+              }
+            },
+            {
+              "name": "Delete User (Soft)",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/users/{{awali_user_id}}",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["users", "{{awali_user_id}}"]
+                },
+                "description": "Soft-deletes a user (sets isDeleted=true). User data is preserved for audit purposes."
+              }
+            },
+            {
+              "name": "Activate User",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/users/{{awali_user_id}}/activate",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["users", "{{awali_user_id}}", "activate"]
+                },
+                "description": "Activates a deactivated user account, allowing them to log in."
+              }
+            },
+            {
+              "name": "Deactivate User",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/users/{{awali_user_id}}/deactivate",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["users", "{{awali_user_id}}", "deactivate"]
+                },
+                "description": "Deactivates a user account. They will not be able to log in until re-activated."
+              }
+            }
+          ]
+        },
+        {
+          "name": "📁 Query Operations",
+          "item": [
+            {
+              "name": "Search Users by Name/Email",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/users?search=ahmed",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["users"],
+                  "query": [
+                    {
+                      "key": "search",
+                      "value": "ahmed",
+                      "description": "Search in name and email"
+                    }
+                  ]
+                },
+                "description": "Text search across user name and email fields."
+              }
+            },
+            {
+              "name": "Filter by Role",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/users?role={{awali_role_id}}",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["users"],
+                  "query": [
+                    {
+                      "key": "role",
+                      "value": "{{awali_role_id}}",
+                      "description": "Filter by role ObjectId"
+                    }
+                  ]
+                },
+                "description": "Returns only users assigned to a specific role."
+              }
+            },
+            {
+              "name": "Filter Active/Inactive Users",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/users?isActive=true",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["users"],
+                  "query": [
+                    {
+                      "key": "isActive",
+                      "value": "true",
+                      "description": "true = active users only"
+                    }
+                  ]
+                },
+                "description": "Filter users by their active/inactive status."
+              }
+            },
+            {
+              "name": "Advanced Query — Search + Filter + Sort",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/users?search=ahmed&isActive=true&sort=-createdAt&page=1&limit=10",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["users"],
+                  "query": [
+                    { "key": "search", "value": "ahmed" },
+                    { "key": "isActive", "value": "true" },
+                    {
+                      "key": "sort",
+                      "value": "-createdAt",
+                      "description": "Newest first"
+                    },
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "10" }
+                  ]
+                },
+                "description": "Combines search, filter, sort, and pagination in a single query."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🛡️ Roles & Permissions",
+      "description": "Dynamic RBAC — create and manage roles with granular per-module permissions.",
+      "item": [
+        {
+          "name": "📁 CRUD Operations",
+          "item": [
+            {
+              "name": "List Roles",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/roles",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["roles"]
+                },
+                "description": "Returns all roles with their full permission matrices."
+              }
+            },
+            {
+              "name": "Get Role by ID",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/roles/{{awali_role_id}}",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["roles", "{{awali_role_id}}"]
+                },
+                "description": "Returns a single role with its complete permissions object."
+              }
+            },
+            {
+              "name": "Create Role",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.success && jsonData.data) {",
+                      "  pm.environment.set('awali_role_id', jsonData.data.id);",
+                      "  console.log('✅ Role ID saved:', jsonData.data.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  },
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nameEn\": \"Sales Agent\",\n  \"nameAr\": \"وكيل مبيعات\",\n  \"description\": {\n    \"en\": \"Field sales agent with CRM access\",\n    \"ar\": \"وكيل مبيعات ميداني مع صلاحيات CRM\"\n  },\n  \"permissions\": {\n    \"units\": { \"create\": false, \"read\": true, \"update\": false, \"delete\": false },\n    \"clients\": { \"create\": true, \"read\": true, \"update\": true, \"delete\": false },\n    \"deals\": { \"create\": true, \"read\": true, \"update\": true, \"delete\": false },\n    \"tasks\": { \"create\": true, \"read\": true, \"update\": true, \"delete\": true },\n    \"communications\": { \"create\": true, \"read\": true, \"update\": false, \"delete\": false },\n    \"documents\": { \"create\": true, \"read\": true, \"update\": false, \"delete\": false },\n    \"analytics\": { \"create\": false, \"read\": true, \"update\": false, \"delete\": false },\n    \"users\": { \"create\": false, \"read\": false, \"update\": false, \"delete\": false },\n    \"roles\": { \"create\": false, \"read\": false, \"update\": false, \"delete\": false },\n    \"audit_logs\": { \"create\": false, \"read\": false, \"update\": false, \"delete\": false },\n    \"building_types\": { \"create\": false, \"read\": true, \"update\": false, \"delete\": false },\n    \"unit_types\": { \"create\": false, \"read\": true, \"update\": false, \"delete\": false },\n    \"features\": { \"create\": false, \"read\": true, \"update\": false, \"delete\": false },\n    \"interest_tracking\": { \"create\": false, \"read\": true, \"update\": false, \"delete\": false },\n    \"media\": { \"create\": true, \"read\": true, \"update\": false, \"delete\": false }\n  }\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{awali_base_url}}/roles",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["roles"]
+                },
+                "description": "Creates a new role with a granular permissions matrix.\n\n**Permission modules:** users, roles, units, building_types, unit_types, features, clients, deals, tasks, activities, communications, documents, analytics, settings, audit_logs, media\n\nAuto-saves `awali_role_id` to environment."
+              }
+            },
+            {
+              "name": "Update Role Permissions",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  },
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"permissions\": {\n    \"units\": { \"create\": true, \"read\": true, \"update\": true, \"delete\": false }\n  }\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{awali_base_url}}/roles/{{awali_role_id}}",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["roles", "{{awali_role_id}}"]
+                },
+                "description": "Updates a role's name, description, or individual module permissions. System roles (isSystem=true) cannot be modified."
+              }
+            },
+            {
+              "name": "Delete Role",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/roles/{{awali_role_id}}",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["roles", "{{awali_role_id}}"]
+                },
+                "description": "Deletes a role. Fails if users are assigned to the role or if it is a system role."
+              }
+            }
+          ]
+        },
+        {
+          "name": "📁 Query Operations",
+          "item": [
+            {
+              "name": "Filter Active Roles",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/roles?isActive=true",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["roles"],
+                  "query": [
+                    {
+                      "key": "isActive",
+                      "value": "true",
+                      "description": "true = active roles only"
+                    }
+                  ]
+                },
+                "description": "Returns only active/inactive roles."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🏢 Units (Properties)",
+      "description": "Core property module — manage listings, images, and documents.",
+      "item": [
+        {
+          "name": "📁 CRUD Operations",
+          "item": [
+            {
+              "name": "List Units (Paginated)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/units?page=1&limit=20",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["units"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "20" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Unit by ID",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/units/{{awali_unit_id}}",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["units", "{{awali_unit_id}}"]
+                },
+                "description": "Returns a single unit. **Auto-tracks a view interest log** for the current user."
+              }
+            },
+            {
+              "name": "Create Unit",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.success && jsonData.data) {",
+                      "  pm.environment.set('awali_unit_id', jsonData.data.id);",
+                      "  console.log('✅ Unit ID saved:', jsonData.data.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  },
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"unitNumber\": \"A-101\",\n  \"buildingType\": \"{{awali_building_type_id}}\",\n  \"unitType\": \"{{awali_unit_type_id}}\",\n  \"features\": [\"{{awali_feature_id}}\"],\n  \"status\": \"available\",\n  \"price\": {\n    \"amount\": 1250000,\n    \"currency\": \"SAR\"\n  },\n  \"area\": {\n    \"plot\": 450,\n    \"built\": 320,\n    \"unit\": \"sqm\"\n  },\n  \"specifications\": {\n    \"bedrooms\": 4,\n    \"bathrooms\": 3,\n    \"floors\": 2,\n    \"parkingSpaces\": 2\n  },\n  \"facade\": \"north\",\n  \"description\": {\n    \"en\": \"Luxurious 4-bedroom villa with private garden\",\n    \"ar\": \"فيلا فاخرة بأربع غرف نوم مع حديقة خاصة\"\n  },\n  \"floor\": 1,\n  \"map\": {\n    \"latitude\": 24.6877,\n    \"longitude\": 46.7219,\n    \"address\": \"Al Olaya District, Riyadh\"\n  }\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{awali_base_url}}/units",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["units"]
+                },
+                "description": "Creates a new property unit.\n\n**Required:** unitNumber, buildingType (ObjectId), unitType (ObjectId), price.amount\n\n**Status enum:** available, reserved, under_contract, sold, maintenance\n\n**Facade enum:** north, south, east, west, north-east, north-west, south-east, south-west\n\nAuto-saves `awali_unit_id` to environment."
+              }
+            },
+            {
+              "name": "Update Unit",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  },
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"price\": {\n    \"amount\": 1350000\n  },\n  \"description\": {\n    \"en\": \"Updated: Luxurious 4-bedroom villa with pool\",\n    \"ar\": \"محدث: فيلا فاخرة بأربع غرف نوم مع مسبح\"\n  }\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{awali_base_url}}/units/{{awali_unit_id}}",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["units", "{{awali_unit_id}}"]
+                }
+              }
+            },
+            {
+              "name": "Delete Unit (Soft)",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/units/{{awali_unit_id}}",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["units", "{{awali_unit_id}}"]
+                }
+              }
+            },
+            {
+              "name": "Change Unit Status",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  },
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"reserved\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{awali_base_url}}/units/{{awali_unit_id}}/status",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["units", "{{awali_unit_id}}", "status"]
+                },
+                "description": "Changes the unit's status.\n\n**Enum:** available, reserved, under_contract, sold, maintenance"
+              }
+            },
+            {
+              "name": "Publish / Unpublish Unit",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  },
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"isPublished\": true\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{awali_base_url}}/units/{{awali_unit_id}}/publish",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["units", "{{awali_unit_id}}", "publish"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "📁 Media Operations",
+          "item": [
+            {
+              "name": "Upload Images (to Cloudflare R2)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "images",
+                      "type": "file",
+                      "src": [],
+                      "description": "Select 1–20 image files (JPEG, PNG, WebP, AVIF). Max 10MB each."
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{awali_base_url}}/units/{{awali_unit_id}}/images",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["units", "{{awali_unit_id}}", "images"]
+                },
+                "description": "Uploads one or more property images directly to Cloudflare R2.\n\n**Content-Type:** multipart/form-data\n**Field name:** images\n**Allowed types:** JPEG, PNG, WebP, AVIF\n**Max size:** 10MB per image, up to 20 images per request"
+              }
+            },
+            {
+              "name": "Delete Image from R2",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/units/{{awali_unit_id}}/images/:imageKey",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["units", "{{awali_unit_id}}", "images", ":imageKey"],
+                  "variable": [
+                    {
+                      "key": "imageKey",
+                      "value": "units/uuid-filename.jpg",
+                      "description": "The R2 object key from the image object"
+                    }
+                  ]
+                },
+                "description": "Deletes a specific image from Cloudflare R2 and removes it from the unit record.\n\n**URL param:** imageKey — the R2 object key (e.g., `units/uuid-photo.jpg`)"
+              }
+            },
+            {
+              "name": "Reorder Images",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  },
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"images\": [\n    { \"key\": \"units/image1.jpg\", \"order\": 0, \"isPrimary\": true },\n    { \"key\": \"units/image2.jpg\", \"order\": 1, \"isPrimary\": false },\n    { \"key\": \"units/image3.jpg\", \"order\": 2, \"isPrimary\": false }\n  ]\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{awali_base_url}}/units/{{awali_unit_id}}/images/reorder",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["units", "{{awali_unit_id}}", "images", "reorder"]
+                },
+                "description": "Reorders images and sets the primary (cover) image. Provide full image array with new order values."
+              }
+            },
+            {
+              "name": "Upload Document (to Cloudflare R2)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "document",
+                      "type": "file",
+                      "src": [],
+                      "description": "Single file (PDF, JPEG, PNG, WebP). Max 25MB."
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{awali_base_url}}/units/{{awali_unit_id}}/documents",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["units", "{{awali_unit_id}}", "documents"]
+                },
+                "description": "Uploads a document (floor plan, deed, etc.) to Cloudflare R2 and attaches it to the unit.\n\n**Allowed types:** PDF, JPEG, PNG, WebP — max 25MB"
+              }
+            }
+          ]
+        },
+        {
+          "name": "📁 Query Operations",
+          "item": [
+            {
+              "name": "Search Units",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/units?search=villa",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["units"],
+                  "query": [
+                    {
+                      "key": "search",
+                      "value": "villa",
+                      "description": "Text search in unitNumber, description.en, description.ar"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Filter by Status",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/units?status=available",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["units"],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "available",
+                      "description": "available | reserved | under_contract | sold | maintenance"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Filter by Building Type",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/units?buildingType={{awali_building_type_id}}",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["units"],
+                  "query": [
+                    {
+                      "key": "buildingType",
+                      "value": "{{awali_building_type_id}}"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Filter by Unit Type",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/units?unitType={{awali_unit_type_id}}",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["units"],
+                  "query": [
+                    { "key": "unitType", "value": "{{awali_unit_type_id}}" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Filter by Price Range",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/units?price.amount[gte]=500000&price.amount[lte]=2000000",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["units"],
+                  "query": [
+                    {
+                      "key": "price.amount[gte]",
+                      "value": "500000",
+                      "description": "Minimum price"
+                    },
+                    {
+                      "key": "price.amount[lte]",
+                      "value": "2000000",
+                      "description": "Maximum price"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Filter by Bedrooms",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/units?specifications.bedrooms=4",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["units"],
+                  "query": [{ "key": "specifications.bedrooms", "value": "4" }]
+                }
+              }
+            },
+            {
+              "name": "Sort by Price — Low to High",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/units?sort=price.amount",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["units"],
+                  "query": [{ "key": "sort", "value": "price.amount" }]
+                }
+              }
+            },
+            {
+              "name": "Sort by Price — High to Low",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/units?sort=-price.amount",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["units"],
+                  "query": [{ "key": "sort", "value": "-price.amount" }]
+                }
+              }
+            },
+            {
+              "name": "Sort by Newest",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/units?sort=-createdAt",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["units"],
+                  "query": [{ "key": "sort", "value": "-createdAt" }]
+                }
+              }
+            },
+            {
+              "name": "Advanced Query — All Params Combined",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/units?search=villa&status=available&price.amount[gte]=500000&sort=-price.amount&page=1&limit=10",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["units"],
+                  "query": [
+                    { "key": "search", "value": "villa" },
+                    { "key": "status", "value": "available" },
+                    { "key": "price.amount[gte]", "value": "500000" },
+                    { "key": "sort", "value": "-price.amount" },
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "10" }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "📁 Statistics",
+          "item": [
+            {
+              "name": "Unit Statistics (by Status)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/units/statistics",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["units", "statistics"]
+                },
+                "description": "Returns counts of units grouped by status (available, reserved, sold, etc.)"
+              }
+            },
+            {
+              "name": "Most Viewed Units",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/units/most-viewed",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["units", "most-viewed"]
+                },
+                "description": "Returns top units ranked by view count from interest tracking logs."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🏗️ Building Types",
+      "description": "Manage dynamic building type attributes (e.g., Villa, Apartment, Townhouse). Bilingual nameEn + nameAr.",
+      "item": [
+        {
+          "name": "List Building Types",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/building-types",
+              "host": ["{{awali_base_url}}"],
+              "path": ["building-types"]
+            }
+          }
+        },
+        {
+          "name": "Create Building Type",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data) {",
+                  "  pm.environment.set('awali_building_type_id', jsonData.data.id);",
+                  "  console.log('✅ Building Type ID saved:', jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nameEn\": \"Duplex\",\n  \"nameAr\": \"دوبلكس\",\n  \"description\": {\n    \"en\": \"Two-storey residential unit\",\n    \"ar\": \"وحدة سكنية من طابقين\"\n  },\n  \"icon\": \"duplex-icon\",\n  \"order\": 5\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{awali_base_url}}/building-types",
+              "host": ["{{awali_base_url}}"],
+              "path": ["building-types"]
+            },
+            "description": "Creates a new building type. Auto-saves `awali_building_type_id`."
+          }
+        },
+        {
+          "name": "Update Building Type",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nameEn\": \"Duplex Villa\",\n  \"nameAr\": \"فيلا دوبلكس\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{awali_base_url}}/building-types/{{awali_building_type_id}}",
+              "host": ["{{awali_base_url}}"],
+              "path": ["building-types", "{{awali_building_type_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Building Type",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/building-types/{{awali_building_type_id}}",
+              "host": ["{{awali_base_url}}"],
+              "path": ["building-types", "{{awali_building_type_id}}"]
+            },
+            "description": "Deletes a building type. Fails if units reference it."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏠 Unit Types",
+      "description": "Manage dynamic unit type attributes (e.g., Studio, 1BR, 2BR, Penthouse). Bilingual.",
+      "item": [
+        {
+          "name": "List Unit Types",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/unit-types",
+              "host": ["{{awali_base_url}}"],
+              "path": ["unit-types"]
+            }
+          }
+        },
+        {
+          "name": "Create Unit Type",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data) {",
+                  "  pm.environment.set('awali_unit_type_id', jsonData.data.id);",
+                  "  console.log('✅ Unit Type ID saved:', jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nameEn\": \"3 Bedroom\",\n  \"nameAr\": \"3 غرف نوم\",\n  \"description\": {\n    \"en\": \"Three bedroom residential unit\",\n    \"ar\": \"وحدة سكنية بثلاث غرف نوم\"\n  },\n  \"icon\": \"3br-icon\",\n  \"order\": 3\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{awali_base_url}}/unit-types",
+              "host": ["{{awali_base_url}}"],
+              "path": ["unit-types"]
+            },
+            "description": "Creates a unit type. Auto-saves `awali_unit_type_id`."
+          }
+        },
+        {
+          "name": "Update Unit Type",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nameEn\": \"3BR Deluxe\",\n  \"order\": 4\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{awali_base_url}}/unit-types/{{awali_unit_type_id}}",
+              "host": ["{{awali_base_url}}"],
+              "path": ["unit-types", "{{awali_unit_type_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Unit Type",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/unit-types/{{awali_unit_type_id}}",
+              "host": ["{{awali_base_url}}"],
+              "path": ["unit-types", "{{awali_unit_type_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "✨ Features (Amenities)",
+      "description": "Manage dynamic property features/amenities. Category enum: amenity, characteristic, facility, service.",
+      "item": [
+        {
+          "name": "List Features",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/features",
+              "host": ["{{awali_base_url}}"],
+              "path": ["features"]
+            }
+          }
+        },
+        {
+          "name": "Create Feature",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data) {",
+                  "  pm.environment.set('awali_feature_id', jsonData.data.id);",
+                  "  console.log('✅ Feature ID saved:', jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nameEn\": \"Infinity Pool\",\n  \"nameAr\": \"مسبح لا نهائي\",\n  \"description\": {\n    \"en\": \"Rooftop infinity pool with city view\",\n    \"ar\": \"مسبح على السطح بإطلالة على المدينة\"\n  },\n  \"category\": \"amenity\",\n  \"icon\": \"pool-icon\",\n  \"order\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{awali_base_url}}/features",
+              "host": ["{{awali_base_url}}"],
+              "path": ["features"]
+            },
+            "description": "Creates a feature/amenity.\n\n**category enum:** amenity, characteristic, facility, service\n\nAuto-saves `awali_feature_id`."
+          }
+        },
+        {
+          "name": "Update Feature",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nameEn\": \"Rooftop Infinity Pool\",\n  \"order\": 2\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{awali_base_url}}/features/{{awali_feature_id}}",
+              "host": ["{{awali_base_url}}"],
+              "path": ["features", "{{awali_feature_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Feature",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/features/{{awali_feature_id}}",
+              "host": ["{{awali_base_url}}"],
+              "path": ["features", "{{awali_feature_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "👤 Clients (CRM Leads)",
+      "description": "CRM client/lead management with pipeline stages, assignment, and AI-powered unit matching.",
+      "item": [
+        {
+          "name": "📁 CRUD Operations",
+          "item": [
+            {
+              "name": "List Clients",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/clients?page=1&limit=20",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["clients"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "20" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Client by ID",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/clients/{{awali_client_id}}",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["clients", "{{awali_client_id}}"]
+                }
+              }
+            },
+            {
+              "name": "Create Client",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.success && jsonData.data) {",
+                      "  pm.environment.set('awali_client_id', jsonData.data.id);",
+                      "  console.log('✅ Client ID saved:', jsonData.data.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  },
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": {\n    \"en\": \"Khalid Al-Otaibi\",\n    \"ar\": \"خالد العتيبي\"\n  },\n  \"email\": \"khalid@example.com\",\n  \"phone\": \"+966512345678\",\n  \"type\": \"individual\",\n  \"source\": \"referral\",\n  \"assignedTo\": \"{{awali_user_id}}\",\n  \"budget\": {\n    \"min\": 800000,\n    \"max\": 1500000,\n    \"currency\": \"SAR\"\n  },\n  \"preferences\": {\n    \"bedrooms\": 4,\n    \"bathrooms\": 3,\n    \"minArea\": 250,\n    \"preferredLocations\": [\"Al Olaya\", \"Al Nakheel\"]\n  },\n  \"notes\": \"Prefers north-facing units with private garden\",\n  \"tags\": [\"VIP\", \"hot-lead\"]\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{awali_base_url}}/clients",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["clients"]
+                },
+                "description": "Creates a new CRM lead/client.\n\n**Required:** name.en, name.ar, phone\n\n**type enum:** individual, company\n\n**source enum:** website, referral, social_media, walk_in, phone, advertising, exhibition, other\n\nAuto-saves `awali_client_id`."
+              }
+            },
+            {
+              "name": "Update Client",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  },
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"budget\": {\n    \"min\": 1000000,\n    \"max\": 2000000\n  },\n  \"notes\": \"Updated: looking for corner unit with pool view\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{awali_base_url}}/clients/{{awali_client_id}}",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["clients", "{{awali_client_id}}"]
+                }
+              }
+            },
+            {
+              "name": "Delete Client (Soft)",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/clients/{{awali_client_id}}",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["clients", "{{awali_client_id}}"]
+                }
+              }
+            },
+            {
+              "name": "Change Client Status",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  },
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"qualified\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{awali_base_url}}/clients/{{awali_client_id}}/status",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["clients", "{{awali_client_id}}", "status"]
+                },
+                "description": "Moves client to a new pipeline stage.\n\n**status enum:** new, contacted, interested, qualified, negotiating, won, lost\n\nFor `lost` status, optionally include `lostReason`."
+              }
+            },
+            {
+              "name": "Assign Client to Agent",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  },
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"assignedTo\": \"{{awali_user_id}}\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{awali_base_url}}/clients/{{awali_client_id}}/assign",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["clients", "{{awali_client_id}}", "assign"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "📁 Query Operations",
+          "item": [
+            {
+              "name": "Search Clients",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/clients?search=khalid",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["clients"],
+                  "query": [{ "key": "search", "value": "khalid" }]
+                }
+              }
+            },
+            {
+              "name": "Filter by Status",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/clients?status=qualified",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["clients"],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "qualified",
+                      "description": "new | contacted | interested | qualified | negotiating | won | lost"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Filter by Assigned Agent",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/clients?assignedTo={{awali_user_id}}",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["clients"],
+                  "query": [
+                    { "key": "assignedTo", "value": "{{awali_user_id}}" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Advanced Query — Search + Filter + Sort",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/clients?search=khalid&status=qualified&sort=-createdAt&page=1&limit=10",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["clients"],
+                  "query": [
+                    { "key": "search", "value": "khalid" },
+                    { "key": "status", "value": "qualified" },
+                    { "key": "sort", "value": "-createdAt" },
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "10" }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "📁 Client Intelligence",
+          "item": [
+            {
+              "name": "Client Timeline",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/clients/{{awali_client_id}}/timeline",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["clients", "{{awali_client_id}}", "timeline"]
+                },
+                "description": "Returns a chronological timeline of all activities, communications, tasks, and deals associated with this client."
+              }
+            },
+            {
+              "name": "Matching Units for Client",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/clients/{{awali_client_id}}/matching-units",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["clients", "{{awali_client_id}}", "matching-units"]
+                },
+                "description": "Returns available units that best match the client's budget and property preferences."
+              }
+            },
+            {
+              "name": "Client Statistics (Funnel)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/clients/statistics",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["clients", "statistics"]
+                },
+                "description": "Returns client counts at each pipeline stage, conversion rates, and funnel analytics."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "💰 Deals (Pipeline)",
+      "description": "Sales pipeline management — track deals from inquiry through contract to closed.",
+      "item": [
+        {
+          "name": "📁 CRUD Operations",
+          "item": [
+            {
+              "name": "List Deals",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/deals?page=1&limit=20",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["deals"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "20" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Deal by ID",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/deals/{{awali_deal_id}}",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["deals", "{{awali_deal_id}}"]
+                }
+              }
+            },
+            {
+              "name": "Create Deal",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.success && jsonData.data) {",
+                      "  pm.environment.set('awali_deal_id', jsonData.data.id);",
+                      "  console.log('✅ Deal ID saved:', jsonData.data.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  },
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Villa A-101 Purchase for Al-Otaibi\",\n  \"client\": \"{{awali_client_id}}\",\n  \"unit\": \"{{awali_unit_id}}\",\n  \"stage\": \"inquiry\",\n  \"value\": {\n    \"amount\": 1250000,\n    \"currency\": \"SAR\"\n  },\n  \"expectedCloseDate\": \"2026-06-30T00:00:00.000Z\",\n  \"assignedTo\": \"{{awali_user_id}}\",\n  \"notes\": \"Client is motivated buyer, pre-approved for financing\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{awali_base_url}}/deals",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["deals"]
+                },
+                "description": "Creates a new deal in the sales pipeline.\n\n**Required:** title, client (ObjectId), unit (ObjectId), value.amount, assignedTo (ObjectId)\n\n**stage enum:** inquiry, viewing, negotiation, proposal, contract, closed_won, closed_lost\n\nAuto-saves `awali_deal_id`."
+              }
+            },
+            {
+              "name": "Update Deal",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  },
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"value\": {\n    \"amount\": 1200000\n  },\n  \"notes\": \"Price negotiated down. Client accepted final offer.\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{awali_base_url}}/deals/{{awali_deal_id}}",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["deals", "{{awali_deal_id}}"]
+                }
+              }
+            },
+            {
+              "name": "Delete Deal (Soft)",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/deals/{{awali_deal_id}}",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["deals", "{{awali_deal_id}}"]
+                }
+              }
+            },
+            {
+              "name": "Move Pipeline Stage",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  },
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"stage\": \"proposal\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{awali_base_url}}/deals/{{awali_deal_id}}/stage",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["deals", "{{awali_deal_id}}", "stage"]
+                },
+                "description": "Advances or changes the deal's pipeline stage.\n\n**stage enum:** inquiry, viewing, negotiation, proposal, contract, closed_won, closed_lost\n\nFor `closed_lost`, include `lostReason` field."
+              }
+            },
+            {
+              "name": "Record Payment",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  },
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"amount\": 250000,\n  \"date\": \"2026-01-15T00:00:00.000Z\",\n  \"method\": \"bank_transfer\",\n  \"reference\": \"TXN-2026-0115-001\",\n  \"notes\": \"First installment — 20% down payment\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{awali_base_url}}/deals/{{awali_deal_id}}/payments",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["deals", "{{awali_deal_id}}", "payments"]
+                },
+                "description": "Records a payment against a deal.\n\n**method enum:** cash, bank_transfer, cheque, credit_card"
+              }
+            }
+          ]
+        },
+        {
+          "name": "📁 Query Operations",
+          "item": [
+            {
+              "name": "Filter Deals by Stage",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/deals?stage=negotiation",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["deals"],
+                  "query": [{ "key": "stage", "value": "negotiation" }]
+                }
+              }
+            },
+            {
+              "name": "Filter by Deal Value Range",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/deals?value.amount[gte]=500000&value.amount[lte]=2000000",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["deals"],
+                  "query": [
+                    { "key": "value.amount[gte]", "value": "500000" },
+                    { "key": "value.amount[lte]", "value": "2000000" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Advanced Query — Filter + Sort + Paginate",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/deals?stage=proposal&sort=-value.amount&page=1&limit=10",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["deals"],
+                  "query": [
+                    { "key": "stage", "value": "proposal" },
+                    { "key": "sort", "value": "-value.amount" },
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "10" }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "📁 Pipeline",
+          "item": [
+            {
+              "name": "Pipeline Summary (by Stage)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/deals/pipeline",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["deals", "pipeline"]
+                },
+                "description": "Returns deals grouped by pipeline stage with totals and value summaries for the Kanban board view."
+              }
+            },
+            {
+              "name": "Deal Statistics",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{awali_access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{awali_base_url}}/deals/statistics",
+                  "host": ["{{awali_base_url}}"],
+                  "path": ["deals", "statistics"]
+                },
+                "description": "Returns deal counts, total pipeline value, win/loss rates, and average deal size."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📋 Tasks",
+      "description": "CRM task management — follow-ups, meetings, viewings, document requests.",
+      "item": [
+        {
+          "name": "List Tasks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/tasks?page=1&limit=20",
+              "host": ["{{awali_base_url}}"],
+              "path": ["tasks"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data) {",
+                  "  pm.environment.set('awali_task_id', jsonData.data.id);",
+                  "  console.log('✅ Task ID saved:', jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": {\n    \"en\": \"Schedule unit viewing for Al-Otaibi\",\n    \"ar\": \"جدولة معاينة الوحدة للعتيبي\"\n  },\n  \"description\": \"Client wants to view Villa A-101 this weekend\",\n  \"type\": \"viewing\",\n  \"priority\": \"high\",\n  \"dueDate\": \"2026-02-15T10:00:00.000Z\",\n  \"assignedTo\": \"{{awali_user_id}}\",\n  \"relatedClient\": \"{{awali_client_id}}\",\n  \"relatedDeal\": \"{{awali_deal_id}}\",\n  \"relatedUnit\": \"{{awali_unit_id}}\",\n  \"notes\": \"Confirm time slot with client by phone\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{awali_base_url}}/tasks",
+              "host": ["{{awali_base_url}}"],
+              "path": ["tasks"]
+            },
+            "description": "Creates a new task.\n\n**Required:** title.en, dueDate, assignedTo (ObjectId)\n\n**type enum:** follow_up, meeting, call, viewing, document_request, other\n\n**priority enum:** low, medium, high, urgent\n\nAuto-saves `awali_task_id`."
+          }
+        },
+        {
+          "name": "Get Task by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/tasks/{{awali_task_id}}",
+              "host": ["{{awali_base_url}}"],
+              "path": ["tasks", "{{awali_task_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Task",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"priority\": \"urgent\",\n  \"dueDate\": \"2026-02-10T09:00:00.000Z\",\n  \"notes\": \"Client called to reschedule to earlier date\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{awali_base_url}}/tasks/{{awali_task_id}}",
+              "host": ["{{awali_base_url}}"],
+              "path": ["tasks", "{{awali_task_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Mark Task Complete",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/tasks/{{awali_task_id}}/complete",
+              "host": ["{{awali_base_url}}"],
+              "path": ["tasks", "{{awali_task_id}}", "complete"]
+            },
+            "description": "Marks a task as completed with the current timestamp."
+          }
+        },
+        {
+          "name": "Delete Task",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/tasks/{{awali_task_id}}",
+              "host": ["{{awali_base_url}}"],
+              "path": ["tasks", "{{awali_task_id}}"]
+            }
+          }
+        },
+        {
+          "name": "My Tasks (Current User)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/tasks/my-tasks",
+              "host": ["{{awali_base_url}}"],
+              "path": ["tasks", "my-tasks"]
+            },
+            "description": "Returns all tasks assigned to the currently authenticated user, sorted by due date."
+          }
+        },
+        {
+          "name": "Overdue Tasks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/tasks/overdue",
+              "host": ["{{awali_base_url}}"],
+              "path": ["tasks", "overdue"]
+            },
+            "description": "Returns all incomplete tasks whose due date has passed. Useful for dashboard alerts."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📞 Communications",
+      "description": "Log and track client communication — calls, emails, WhatsApp, meetings, SMS.",
+      "item": [
+        {
+          "name": "List Communications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/communications?page=1&limit=20",
+              "host": ["{{awali_base_url}}"],
+              "path": ["communications"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Log Communication",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data) {",
+                  "  pm.environment.set('awali_comm_id', jsonData.data.id);",
+                  "  console.log('✅ Communication ID saved:', jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"client\": \"{{awali_client_id}}\",\n  \"type\": \"phone_call\",\n  \"direction\": \"outbound\",\n  \"subject\": \"Follow-up on Villa A-101 viewing interest\",\n  \"content\": \"Called client to confirm interest in Villa A-101. Client is very interested and wants to schedule a viewing this weekend.\",\n  \"duration\": 8,\n  \"outcome\": \"follow_up_needed\",\n  \"nextAction\": \"Schedule viewing appointment\",\n  \"nextActionDate\": \"2026-02-12T10:00:00.000Z\",\n  \"relatedDeal\": \"{{awali_deal_id}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{awali_base_url}}/communications",
+              "host": ["{{awali_base_url}}"],
+              "path": ["communications"]
+            },
+            "description": "Logs a new client communication event.\n\n**Required:** client (ObjectId), type, direction, subject\n\n**type enum:** phone_call, email, whatsapp, meeting, sms, other\n\n**direction enum:** inbound, outbound\n\n**outcome enum:** successful, no_answer, voicemail, callback_requested, not_interested, follow_up_needed\n\nAuto-saves `awali_comm_id`."
+          }
+        },
+        {
+          "name": "Communications by Client",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/communications/client/{{awali_client_id}}",
+              "host": ["{{awali_base_url}}"],
+              "path": ["communications", "client", "{{awali_client_id}}"]
+            },
+            "description": "Returns all communications for a specific client, sorted by date descending."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📄 Documents",
+      "description": "Upload and manage property/deal documents stored on Cloudflare R2.",
+      "item": [
+        {
+          "name": "List Documents",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/documents?page=1&limit=20",
+              "host": ["{{awali_base_url}}"],
+              "path": ["documents"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Upload Document",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data) {",
+                  "  pm.environment.set('awali_doc_id', jsonData.data.id);",
+                  "  console.log('✅ Document ID saved:', jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "document",
+                  "type": "file",
+                  "src": [],
+                  "description": "Single file: PDF, JPEG, PNG, WebP (max 25MB)"
+                },
+                {
+                  "key": "name[en]",
+                  "value": "Sale Agreement - Villa A-101",
+                  "type": "text"
+                },
+                {
+                  "key": "name[ar]",
+                  "value": "عقد البيع - فيلا A-101",
+                  "type": "text"
+                },
+                {
+                  "key": "type",
+                  "value": "contract",
+                  "type": "text",
+                  "description": "contract | deed | id_copy | floor_plan | proposal | invoice | receipt | other"
+                },
+                {
+                  "key": "relatedClient",
+                  "value": "{{awali_client_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "relatedDeal",
+                  "value": "{{awali_deal_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "relatedUnit",
+                  "value": "{{awali_unit_id}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{awali_base_url}}/documents",
+              "host": ["{{awali_base_url}}"],
+              "path": ["documents"]
+            },
+            "description": "Uploads a document file to Cloudflare R2 and saves metadata to the database.\n\n**Content-Type:** multipart/form-data\n\n**type enum:** contract, deed, id_copy, floor_plan, proposal, invoice, receipt, other\n\nAuto-saves `awali_doc_id`."
+          }
+        },
+        {
+          "name": "Delete Document",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/documents/{{awali_doc_id}}",
+              "host": ["{{awali_base_url}}"],
+              "path": ["documents", "{{awali_doc_id}}"]
+            },
+            "description": "Deletes the document metadata from MongoDB AND removes the file object from Cloudflare R2."
+          }
+        }
+      ]
+    },
+    {
+      "name": "👁️ Interest Tracking",
+      "description": "Analytics for unit views and search patterns — powers the \"trending\" and \"most popular\" features.",
+      "item": [
+        {
+          "name": "Most Viewed Units",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/interest/most-viewed?limit=10",
+              "host": ["{{awali_base_url}}"],
+              "path": ["interest", "most-viewed"],
+              "query": [{ "key": "limit", "value": "10" }]
+            },
+            "description": "Returns units ranked by total view count from interest logs."
+          }
+        },
+        {
+          "name": "Most Searched Terms",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/interest/most-searched?limit=20",
+              "host": ["{{awali_base_url}}"],
+              "path": ["interest", "most-searched"],
+              "query": [{ "key": "limit", "value": "20" }]
+            },
+            "description": "Returns the most frequent search keywords entered by agents."
+          }
+        },
+        {
+          "name": "Trending Units",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/interest/trending?days=7",
+              "host": ["{{awali_base_url}}"],
+              "path": ["interest", "trending"],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "7",
+                  "description": "Trending window in days"
+                }
+              ]
+            },
+            "description": "Returns units with the highest view velocity (views per day) in the recent period."
+          }
+        },
+        {
+          "name": "Interest for Specific Unit",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/interest/unit/{{awali_unit_id}}",
+              "host": ["{{awali_base_url}}"],
+              "path": ["interest", "unit", "{{awali_unit_id}}"]
+            },
+            "description": "Returns detailed view analytics for a specific unit — total views, unique viewers, view history."
+          }
+        },
+        {
+          "name": "Search Filter Heatmap",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/interest/heatmap",
+              "host": ["{{awali_base_url}}"],
+              "path": ["interest", "heatmap"]
+            },
+            "description": "Returns aggregated search filter usage — which filters (status, price range, bedrooms, etc.) are most commonly applied."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 Analytics & Reports",
+      "description": "Dashboard KPIs, sales reports, pipeline health, and agent performance analytics.",
+      "item": [
+        {
+          "name": "Dashboard KPIs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/analytics/dashboard",
+              "host": ["{{awali_base_url}}"],
+              "path": ["analytics", "dashboard"]
+            },
+            "description": "Returns the main dashboard KPIs: total units, total clients, active deals, revenue this month, tasks due today, and overdue tasks."
+          }
+        },
+        {
+          "name": "Sales Analytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/analytics/sales?period=monthly",
+              "host": ["{{awali_base_url}}"],
+              "path": ["analytics", "sales"],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "monthly",
+                  "description": "daily | weekly | monthly | yearly"
+                }
+              ]
+            },
+            "description": "Returns sales volume, revenue trends, and closed deals over time."
+          }
+        },
+        {
+          "name": "Pipeline Health",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/analytics/pipeline",
+              "host": ["{{awali_base_url}}"],
+              "path": ["analytics", "pipeline"]
+            },
+            "description": "Returns pipeline stage distribution, total pipeline value, and average deal velocity."
+          }
+        },
+        {
+          "name": "Agent Performance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/analytics/agents",
+              "host": ["{{awali_base_url}}"],
+              "path": ["analytics", "agents"]
+            },
+            "description": "Returns performance metrics per agent: deals won, revenue generated, clients managed, tasks completed."
+          }
+        },
+        {
+          "name": "Client Funnel Analytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/analytics/clients",
+              "host": ["{{awali_base_url}}"],
+              "path": ["analytics", "clients"]
+            },
+            "description": "Returns client conversion funnel — how many leads move through each stage and where they drop off."
+          }
+        },
+        {
+          "name": "Unit Status Analytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/analytics/units",
+              "host": ["{{awali_base_url}}"],
+              "path": ["analytics", "units"]
+            },
+            "description": "Returns unit inventory breakdown by status, type, building type, and price ranges."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📝 Audit Logs",
+      "description": "Immutable change history for all write operations. Read-only — no create/update/delete.",
+      "item": [
+        {
+          "name": "List Audit Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/audit-logs?page=1&limit=20",
+              "host": ["{{awali_base_url}}"],
+              "path": ["audit-logs"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                {
+                  "key": "action",
+                  "value": "",
+                  "description": "create | update | delete",
+                  "disabled": true
+                },
+                {
+                  "key": "resourceType",
+                  "value": "",
+                  "description": "units | clients | deals | tasks",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Returns a paginated list of all audit log entries.\n\n**Optional filters:** action (create/update/delete), resourceType"
+          }
+        },
+        {
+          "name": "Logs for Specific Resource",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/audit-logs/resource/units/{{awali_unit_id}}",
+              "host": ["{{awali_base_url}}"],
+              "path": ["audit-logs", "resource", "units", "{{awali_unit_id}}"]
+            },
+            "description": "Returns the full change history for a specific resource.\n\n**URL params:** type (resourceType e.g. 'units', 'clients'), id (resource ObjectId)"
+          }
+        },
+        {
+          "name": "Logs by User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/audit-logs/user/{{awali_user_id}}",
+              "host": ["{{awali_base_url}}"],
+              "path": ["audit-logs", "user", "{{awali_user_id}}"]
+            },
+            "description": "Returns all audit log entries created by a specific user — useful for activity auditing."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏥 System Health",
+      "description": "Health check endpoints for monitoring and uptime checks.",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{awali_base_url}}/health",
+              "host": ["{{awali_base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Basic health check. Returns server uptime, environment, and version. No authentication required."
+          }
+        },
+        {
+          "name": "Detailed Health (DB + Redis)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{awali_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{awali_base_url}}/health/detailed",
+              "host": ["{{awali_base_url}}"],
+              "path": ["health", "detailed"]
+            },
+            "description": "Extended health check including MongoDB ping and Redis connection status. Requires authentication."
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "awali_base_url",
+      "value": "http://localhost:5000/api/v1",
+      "type": "string"
+    }
+  ]
+}
