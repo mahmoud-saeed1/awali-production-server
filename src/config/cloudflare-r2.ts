@@ -1,8 +1,8 @@
-import { S3Client } from '@aws-sdk/client-s3';
-import { env } from './env';
+import { S3Client } from "@aws-sdk/client-s3";
+import { env } from "./env";
 
 export const r2Client = new S3Client({
-  region: 'auto',
+  region: "auto",
   endpoint: env.CLOUDFLARE_ACCOUNT_ID
     ? `https://${env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`
     : undefined,
